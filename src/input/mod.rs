@@ -1519,6 +1519,19 @@ impl State {
                 // FIXME: granular
                 self.niri.queue_redraw_all();
             }
+            Action::FocusWorkspaceToMonitor(reference) => {
+                if let Some((target_output, target_ws_idx)) =
+                    self.niri.find_output_and_workspace_index(reference)
+                {
+                    self.niri
+                        .layout
+                        .focus_workspace_to_monitor(target_output, target_ws_idx);
+                    self.maybe_warp_cursor_to_focus();
+                    self.niri.layer_shell_on_demand_focus = None;
+                    // FIXME: granular
+                    self.niri.queue_redraw_all();
+                }
+            }
             Action::MoveWorkspaceDown => {
                 self.niri.layout.move_workspace_down();
                 // FIXME: granular

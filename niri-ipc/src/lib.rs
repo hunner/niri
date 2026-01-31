@@ -482,6 +482,15 @@ pub enum Action {
     },
     /// Focus the previous workspace.
     FocusWorkspacePrevious {},
+    /// Focus a workspace, moving it to the current monitor if it's on a different one.
+    ///
+    /// If the target workspace is on a different monitor, swaps it with the current monitor's
+    /// active workspace, then focuses the target workspace on the current monitor.
+    FocusWorkspaceToMonitor {
+        /// Reference (index or name) of the workspace to focus.
+        #[cfg_attr(feature = "clap", arg())]
+        reference: WorkspaceReferenceArg,
+    },
     /// Move the focused window to the workspace below.
     MoveWindowToWorkspaceDown {
         /// Whether the focus should follow the target workspace.

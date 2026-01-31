@@ -3439,6 +3439,84 @@ impl<W: LayoutElement> Layout<W> {
         activate
     }
 
+    /// Focus a workspace, bringing it to the current monitor if needed.
+    ///
+    /// If the target workspace is on a different monitor and is that monitor's active workspace,
+    /// swaps it with the current monitor's active workspace. Otherwise, just moves the target
+    /// workspace to the current monitor without swapping.
+    pub fn focus_workspace_to_monitor(
+        &mut self,
+        target_output: Option<Output>,
+        target_ws_idx: usize,
+    ) {
+        let MonitorSet::Normal {
+            monitors,
+            active_monitor_idx,
+            ..
+        } = &mut self.monitor_set
+        else {
+            return;
+        };
+
+        // Find the target monitor index
+        let target_mon_idx = if let Some(ref output) = target_output {
+            monitors.iter().position(|mon| &mon.output == output)
+        } else {
+            Some(*active_monitor_idx)
+        };
+
+        let Some(target_mon_idx) = target_mon_idx else {
+            return;
+        };
+
+        // If already on the current monitor, just switch to the workspace (no animation)
+        if target_mon_idx == *active_monitor_idx {
+            let mon = &mut monitors[*active_monitor_idx];
+            mon.switch_workspace(target_ws_idx);
+            // Cancel animation to match behavior when workspace comes from another monitor
+            mon.workspace_switch = None;
+            return;
+        }
+
+        // Validate target index
+        if target_ws_idx >= monitors[target_mon_idx].workspaces.len() {
+            return;
+        }
+
+        // Check if target workspace is the active workspace on its monitor
+        let target_is_active = monitors[target_mon_idx].active_workspace_idx == target_ws_idx;
+
+        let mon_a_idx = *active_monitor_idx;
+        let mon_b_idx = target_mon_idx;
+
+        if target_is_active {
+            // Target is active on the other monitor - need to swap
+            let current_ws_idx = monitors[mon_a_idx].active_workspace_idx;
+
+            if current_ws_idx >= monitors[mon_a_idx].workspaces.len() {
+                return;
+            }
+
+            // Use remove_workspace_by_idx to properly update active_workspace_idx
+            // Remove from target monitor first (higher index operations first to avoid issues)
+            let ws_from_target = monitors[mon_b_idx].remove_workspace_by_idx(target_ws_idx);
+            let ws_from_current = monitors[mon_a_idx].remove_workspace_by_idx(current_ws_idx);
+
+            // Insert swapped workspaces
+            monitors[mon_a_idx].insert_workspace(ws_from_target, current_ws_idx, true);
+            monitors[mon_b_idx].insert_workspace(ws_from_current, target_ws_idx, true);
+        } else {
+            // Target is not active on the other monitor - just move it here
+            let current_ws_idx = monitors[mon_a_idx].active_workspace_idx;
+
+            // Remove target workspace from its monitor using proper method
+            let ws_from_target = monitors[mon_b_idx].remove_workspace_by_idx(target_ws_idx);
+
+            // Insert into current monitor and activate
+            monitors[mon_a_idx].insert_workspace(ws_from_target, current_ws_idx + 1, true);
+        }
+    }
+
     pub fn set_fullscreen(&mut self, id: &W::Id, is_fullscreen: bool) {
         // Check if this is a request to unset the windowed fullscreen state.
         if !is_fullscreen {
