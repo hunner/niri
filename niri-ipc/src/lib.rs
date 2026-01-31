@@ -600,6 +600,12 @@ pub enum Action {
         #[cfg_attr(feature = "clap", arg(long))]
         workspace: Option<WorkspaceReferenceArg>,
     },
+    /// Create a new named workspace on the current monitor.
+    CreateNamedWorkspace {
+        /// Name for the new workspace.
+        #[cfg_attr(feature = "clap", arg())]
+        name: String,
+    },
     /// Unset the name of a workspace.
     #[cfg_attr(
         feature = "clap",

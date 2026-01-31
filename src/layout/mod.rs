@@ -4606,6 +4606,34 @@ impl<W: LayoutElement> Layout<W> {
         self.unname_workspace_by_id(id);
     }
 
+    /// Create a new named workspace on the current monitor.
+    ///
+    /// If a workspace with this name already exists, does nothing.
+    pub fn create_named_workspace(&mut self, name: String) {
+        // Ignore if the name is already used
+        if self.find_workspace_by_name(&name).is_some() {
+            return;
+        }
+
+        let MonitorSet::Normal {
+            monitors,
+            active_monitor_idx,
+            ..
+        } = &mut self.monitor_set
+        else {
+            return;
+        };
+
+        let monitor = &mut monitors[*active_monitor_idx];
+
+        // Insert before the last (empty) workspace
+        let insert_idx = monitor.workspaces.len().saturating_sub(1);
+        monitor.add_workspace_at(insert_idx);
+
+        // Name the newly created workspace
+        monitor.workspaces[insert_idx].name = Some(name);
+    }
+
     pub fn set_monitors_overview_state(&mut self) {
         let MonitorSet::Normal { monitors, .. } = &mut self.monitor_set else {
             return;

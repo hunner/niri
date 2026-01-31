@@ -1562,6 +1562,11 @@ impl State {
             Action::SetWorkspaceNameByRef { name, reference } => {
                 self.niri.layout.set_workspace_name(name, Some(reference));
             }
+            Action::CreateNamedWorkspace(name) => {
+                self.niri.layout.create_named_workspace(name);
+                // FIXME: granular
+                self.niri.queue_redraw_all();
+            }
             Action::UnsetWorkspaceName => {
                 self.niri.layout.unset_workspace_name(None);
             }

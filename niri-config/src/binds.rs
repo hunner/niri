@@ -259,6 +259,7 @@ pub enum Action {
         name: String,
         reference: WorkspaceReference,
     },
+    CreateNamedWorkspace(#[knuffel(argument)] String),
     UnsetWorkspaceName,
     #[knuffel(skip)]
     UnsetWorkSpaceNameByRef(#[knuffel(argument)] WorkspaceReference),
@@ -555,6 +556,7 @@ impl From<niri_ipc::Action> for Action {
                 name,
                 reference: WorkspaceReference::from(reference),
             },
+            niri_ipc::Action::CreateNamedWorkspace { name } => Self::CreateNamedWorkspace(name),
             niri_ipc::Action::UnsetWorkspaceName { reference: None } => Self::UnsetWorkspaceName,
             niri_ipc::Action::UnsetWorkspaceName {
                 reference: Some(reference),
